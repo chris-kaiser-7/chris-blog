@@ -1,0 +1,35 @@
+---
+title: 'What may be causing your CrashLoopBackOff Error and how to fix it.'
+publishedAt: '2025-08-03'
+summary: 'Some fixes for fixing CrashLoopBackOff Errors.'
+---
+
+If you see you pod crashing immediately without logging anything and your getting CrashLoopBackOff error. The issue might be because the image is starting and completing quickly. You can check for this error by running 
+```
+oc run <pod-name> --image=<image> --restart=Never
+```
+- \<pod-name\> is what you want to name your pod
+- \<image\> is your image path. If you build the image in openshift or pushed it to openshift repo it will look something like this "image-registry.openshift-image-registry.svc:5000/playground/mybuild"
+
+when adding the "--restart=Never" flag you can check if the pod crashed by simply using 
+```
+oc get pods
+#or
+oc get pods <pod-name>
+```
+and the status of your pod will be Completed instead of Error. Also the "--restart=Never" pairs well with the "--rm" flag which will delete your pod when it stops.
+
+If you want to keep your pod alive even after the run command is completed you can add the -i flag. If you want to have STDIN and STDOUT (thru TTY) you can add the -t flag as well
+
+putting it all together you can do something like this
+```
+oc run testpod --image=image-registry.openshift-image-registry.svc:5000/playground/test --restart=Never --rm -i -t --com
+mand -- /bin/bash
+``` 
+to enter a bash terminal. The --command basically removes the ENTRYPOINT and CMD in the dockerfile and the "--" passes the "/bin/bash" command to the pod to run bash. you could replace "/bin/bash" with something like "/bin/echo hello" or "echo hello" if bin is in your PATH (which is should be). If your entrypoint is something like "echo" then if you don't use "--command" -- will append the the entrypoint command as args so you could do "-- hello world" and the entrypoint will turn into "echo hello world"
+
+But if you don't want to do all that to get a shell you can simply do something like
+```
+oc debug deployment/test
+```
+Where openshift will spawn a pod from the deployment test with the entrypoint "/bin/sh" by default.
