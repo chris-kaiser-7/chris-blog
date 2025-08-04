@@ -18,7 +18,7 @@ RUN npm run build
 #non-privliged container
 FROM nginxinc/nginx-unprivileged:alpine3.22-perl AS production
 
-COPY --from=builder /home/node/app/build /usr/share/nginx/html
+COPY --from=builder /home/node/app/out /usr/share/nginx/html
 
 #non-privliged nginx runs on 8080 instead of 80
 EXPOSE 8080 
