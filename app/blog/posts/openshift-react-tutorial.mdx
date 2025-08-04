@@ -76,6 +76,17 @@ EXPOSE 3000
 CMD ["npm", "start"]
 ```
 
+You also need to add a .dockerignore file with something like
+```
+node_modules
+npm-debug.log
+Dockerfile
+.dockerignore
+.git
+.gitignore
+.env
+```
+
 Read [this blog](https://www.docker.com/blog/how-to-dockerize-react-app/) for a more detailed guide on making react dockerfiles 
 
 Now that you have a dockerfile setup you need to push your code to a repo like github so OpenShift can pull it and make a build.
