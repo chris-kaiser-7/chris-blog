@@ -1,0 +1,145 @@
+---
+title: 'How to deploy a React app to OpenShift'
+publishedAt: '2025-08-03'
+summary: 'A quick guide on how to setup a production react app in openshift by building from source.'
+---
+
+This is quick guide on how to setup a production react app in openshift by building from source.
+
+Prerequisites
+- install oc
+
+First you need to create a Dockerfile in the root directory of your react app.
+for example from [heatmat.git](https://github.com/chris-kaiser-7/heatmap)
+```
+.
+├── Dockerfile
+├── README.md
+├── build
+├── node_modules
+├── package-lock.json
+├── package.json
+├── public
+├── src
+└── tsconfig.json
+```
+
+Here is an example of a production Dockerfile.
+```dockerfile
+FROM node:18 AS builder
+
+#Node user
+USER 1000
+
+RUN mkdir /home/node/app
+WORKDIR /home/node/app
+
+# explicitly give node user permissions
+COPY --chown=node:node package*.json ./
+
+RUN npm install --loglevel=verbose
+
+# explicitly give node user permissions
+COPY --chown=node:node . .
+RUN npm run build
+
+#non-privliged container
+FROM nginxinc/nginx-unprivileged:alpine3.22-perl AS production
+
+COPY --from=builder /home/node/app/build /usr/share/nginx/html
+
+#non-privliged nginx runs on 8080 instead of 80
+EXPOSE 8080 
+
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+If you want a development build Dockerfile you can use npm start instead of nginx.
+```dockerfile
+FROM node:18
+
+#Node user
+USER 1000
+
+RUN mkdir /home/node/app
+WORKDIR /home/node/app
+
+# explicitly give node user permissions
+COPY --chown=node:node package*.json ./
+
+RUN npm install --loglevel=verbose
+
+# explicitly give node user permissions
+COPY --chown=node:node . .
+
+EXPOSE 3000
+CMD ["npm", "start"]
+```
+
+Read [this blog](https://www.docker.com/blog/how-to-dockerize-react-app/) for a more detailed guide on making react dockerfiles 
+
+Now that you have a dockerfile setup you need to push your code to a repo like github so OpenShift can pull it and make a build.
+Once you have your repo setup start by logging in with 'oc' if you are not logged in.
+```bash
+oc login
+```
+navigate to the link and click github, then click display tocken, and then copy paste the oc login command into your bash terminal.
+
+Create a new project with
+```bash
+oc new-project myprojectname
+```
+oc will automaticly switch your kube context to this project. Your kube context defaults the config file at `~/.kube/config`
+
+Create a new app with 
+```bash
+oc new-app https://github.com/yourusernamehere/yourrepohere
+```
+Don't forget you can lookup help my using `oc new-app --help` to get help specificly for the new-app command.
+
+This will create a few resources for you.
+You can view these resources with this (appname defaults to the repo name)
+```bash
+oc get all -l app=appname
+```
+a more detailed view with
+```bash
+oc describe all -l app=appname
+```
+and you can get the yaml spec with 
+```bash
+oc get all -l app=appname -o yaml
+```
+
+Lets over the resources created with `oc new-app`.
+- A [buildconfig resource](https://docs.redhat.com/en/documentation/openshift_container_platform/4.19/html/builds_using_buildconfig/understanding-buildconfigs)
+  which has a build definition and a build trigger for creating new builds.
+- [Imagestream resources](https://docs.redhat.com/en/documentation/openshift_container_platform/4.19/html/images/managing-image-streams)
+  which is basicly a series of images. Buildconfigs and deployments can watch when a new image is pushed to the imagestream and can trigger a build or deployment.
+  You
+- A [Deployment resource](https://docs.redhat.com/en/documentation/openshift_container_platform/4.19/html/building_applications/deployments)
+  which more or less orcistrate orchestrate the pods of your application thru replicaset resources.
+  Deployment will manage the replica sets and scale them based on the configration.
+  You shouldn't have to manage replica set resources or pods directly.
+- A [Service resource](https://docs.redhat.com/en/documentation/openshift_container_platform/4.19/html/network_apis/service-v1)
+  which directs trafic through a local port to selected pods 
+
+Next we need to expose the service to the world!
+```bash
+oc create route edge myroutename --service=heatmap
+```
+This will create a route resource that directs traffic from a host and path to the service.
+
+You can view the host by using `oc get route`. For example
+```bash
+$oc get route
+NAME      HOST/PORT                                   PATH   SERVICES   PORT       TERMINATION   WILDCARD
+heatmap   heatmap-myproject.apps.gaspar.ontampa.dev          heatmap    8080-tcp   edge          None
+```
+And you should be able to navigate to https://yourhost/yourpath (eg. https://heatmap-myproject.apps.gaspar.ontampa.dev) here and see your application!
+
+
+
+
+
+
