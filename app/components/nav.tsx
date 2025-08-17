@@ -4,12 +4,15 @@ const navItems = {
 	'/': {
 		name: 'home',
 	},
+	'/resume.pdf': {
+		name: 'resume',
+	},
 	'/blog': {
 		name: 'blog',
 	},
 	'/projects': {
 		name: 'projects',
-	}
+	},
 }
 
 export function Navbar() {
@@ -22,6 +25,19 @@ export function Navbar() {
 				>
 					<div className="flex flex-row space-x-0 pr-10">
 						{Object.entries(navItems).map(([path, { name }]) => {
+							if (name === 'resume') {
+								return (
+									<Link
+										key={path}
+										href={path}
+										rel="noopener noreferrer"
+										target="_blank"
+										className="transition-all hover:text-neutral-800 dark:hover:text-neutral-200 flex align-middle relative py-1 px-2 m-1"
+									>
+										{name}
+									</Link>
+								)
+							}
 							return (
 								<Link
 									key={path}
