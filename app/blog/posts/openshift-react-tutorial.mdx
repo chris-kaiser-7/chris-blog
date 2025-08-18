@@ -10,7 +10,7 @@ Prerequisites
 - install oc
 
 First you need to create a Dockerfile in the root directory of your react app.
-for example from [heatmat.git](https://github.com/chris-kaiser-7/heatmap)
+for example from [heatmat.git](https://github.com/chris-kaiser-7/appname)
 ```
 .
 ├── Dockerfile
@@ -136,7 +136,7 @@ Lets over the resources created with `oc new-app`.
 
 Next we need to expose the service to the world!
 ```bash
-oc create route edge --service=heatmap
+oc create route edge --service=appname
 ```
 This will create a route resource that directs traffic from a host and path to the service.
 
@@ -144,9 +144,9 @@ You can view the host by using `oc get route`. For example
 ```bash
 $oc get route
 NAME      HOST/PORT                                   PATH   SERVICES   PORT       TERMINATION   WILDCARD
-heatmap   heatmap-myproject.apps.gaspar.ontampa.dev          heatmap    8080-tcp   edge          None
+appname   appname-myproject.apps.gaspar.ontampa.dev          appname    8080-tcp   edge          None
 ```
-And you should be able to navigate to https://yourhost/yourpath (eg. https://heatmap-myproject.apps.gaspar.ontampa.dev) here and see your application!
+And you should be able to navigate to https://yourhost/yourpath (eg. https://appname-myproject.apps.gaspar.ontampa.dev) here and see your application!
 
 
 
