@@ -12,9 +12,6 @@ export default function Page() {
 				<a href="https://www.linkedin.com/in/chris-a-kaiser/">Linkedin (chris-a-kaiser)</a>
 				{` if you are interested in hiring me.`}
 			</p>
-			<p className="mb-4">
-				{`Hi Alin`}
-			</p>
 		</section>
 	)
 }
